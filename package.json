@@ -1,0 +1,16 @@
+{
+  "name": "browserpit",
+  "version": "1.0.0",
+  "description": "Separate, visible browser instances with IDs – own cookies, logins and storage each – and every one usable by Claude (Claude Code, Claude Desktop, any MCP client) via Playwright MCP.",
+  "type": "module",
+  "bin": { "browserpit": "bin/browserpit.js" },
+  "files": ["bin/", "lib/", "README.md", "LICENSE"],
+  "engines": { "node": ">=22" },
+  "dependencies": { "@playwright/mcp": "^0.0.86" },
+  "keywords": ["browser", "profiles", "isolated", "multi-account", "browser-profiles", "claude", "claude-code", "mcp", "mcp-server", "playwright", "playwright-mcp", "ai-browser", "browser-automation", "agent", "chrome", "edge", "chromium", "cdp", "multi-login", "sessions"],
+  "homepage": "https://github.com/ManuelWestermeier/browserpit#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/ManuelWestermeier/browserpit.git" },
+  "bugs": { "url": "https://github.com/ManuelWestermeier/browserpit/issues" },
+  "author": "Manuel Westermeier",
+  "license": "MIT"
+}

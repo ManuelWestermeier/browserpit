@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>browserpit</title>
+<style>
+:root{--bg:#101214;--panel:#16191c;--line:#24282d;--ink:#eceae4;--muted:#9aa09c;--dim:#6b716d;--amber:#e8a33d;--ok:#6cc58a;--bad:#e26d5a;--mono:ui-monospace,"Cascadia Code",Consolas,monospace}
+@media (prefers-color-scheme:light){:root{--bg:#f4f3ef;--panel:#fbfaf7;--line:#dddad2;--ink:#1d1f21;--muted:#5c615e;--dim:#8a8f8b;--amber:#b8721a;--ok:#2f8f53;--bad:#b8432f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+::selection{background:var(--amber);color:#111}
+header{display:flex;align-items:baseline;gap:14px;padding:22px 28px 6px}
+h1{margin:0;font-size:22px;letter-spacing:-.02em}
+h1 span{color:var(--amber)}
+header small{color:var(--dim)}
+main{padding:8px 28px 40px;max-width:980px}
+.lead{color:var(--muted);margin:0 0 20px;max-width:62ch}
+form.new{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+input,select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+input[name=name]{flex:1;min-width:200px}
+button{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+button:hover{border-color:var(--muted);background:var(--panel)}
+button.primary{background:var(--amber);border-color:var(--amber);color:#16120a;font-weight:600}
+button.primary:hover{filter:brightness(1.08)}
+button.danger:hover{border-color:var(--bad);color:var(--bad)}
+ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+li{border-bottom:1px solid var(--line);padding:14px 0 14px 16px;position:relative}
+li::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:2px;background:var(--c)}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.name{font-weight:600;font-size:16px}
+.id{font-family:var(--mono);color:var(--muted);font-size:13px}
+.state{font-size:13px;color:var(--dim);display:flex;align-items:center;gap:6px}
+.state i{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.state.on{color:var(--ok)}.state.on i{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.spacer{flex:1}
+.cmd{margin-top:10px;display:flex;gap:8px;align-items:center}
+.cmd code{flex:1;font-family:var(--mono);font-size:12.5px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 10px;overflow-x:auto;white-space:nowrap;color:var(--muted)}
+.meta{font-size:12.5px;color:var(--dim);margin-top:6px}
+.empty{color:var(--muted);padding:28px 0}
+.err{color:var(--bad);min-height:1.4em;margin:-8px 0 10px}
+details{margin-top:28px;color:var(--muted);max-width:70ch}
+summary{cursor:pointer;color:var(--ink)}
+details code{font-family:var(--mono);font-size:13px}
+</style>
+</head>
+<body>
+<header><h1>browser<span>pit</span></h1><small>v%VERSION%</small></header>
+<main>
+<p class="lead" data-t="lead">Separate, visible browsers. Each ID has its own cookies, logins and storage – nothing is shared between them. Give Claude any of them with one command.</p>
+<form class="new" id="new">
+  <input name="name" required maxlength="60" placeholder="Name, e.g. Work, Shop test, Customer A" data-tp="ph">
+  <select name="engine" title="Engine"><option value="auto">Auto</option><option value="chrome">Chrome</option><option value="msedge">Edge</option><option value="chromium">Chromium</option></select>
+  <button class="primary" data-t="create">Create instance</button>
+</form>
+<div class="err" id="err" role="alert"></div>
+<ul id="list"></ul>
+<details>
+  <summary data-t="how">How Claude gets access</summary>
+  <p data-t="how1">Each instance is its own MCP server. The command under an instance adds it to Claude Code; Claude then drives exactly that browser window while you watch. Several instances = several servers (e.g. read with one account, post with another).</p>
+  <p data-t="how2">Claude Desktop or other MCP clients: command <code>npx</code>, arguments <code>-y browserpit mcp &lt;id&gt;</code>. Logins, 2FA and captchas you do yourself in the window.</p>
+  <p id="home"></p>
+</details>
+</main>
+<script>
+const de = /^de\b/i.test(navigator.language);
+const T = de ? {
+  lead: 'Getrennte, sichtbare Browser. Jede ID hat eigene Cookies, Logins und Speicher – nichts wird geteilt. Claude bekommt jeden davon mit einem Befehl.',
+  create: 'Instanz anlegen', ph: 'Name, z. B. Arbeit, Shop-Test, Kunde A', how: 'So bekommt Claude Zugriff',
+  how1: 'Jede Instanz ist ein eigener MCP-Server. Der Befehl unter einer Instanz fügt sie Claude Code hinzu; Claude steuert dann genau dieses Browserfenster, während du zusiehst. Mehrere Instanzen = mehrere Server (z. B. mit einem Konto lesen, mit einem anderen posten).',
+  how2: 'Claude Desktop oder andere MCP-Clients: Befehl npx, Argumente -y browserpit mcp <id>. Logins, 2FA und Captchas erledigst du selbst im Fenster.',
+  open: 'Öffnen', close: 'Schließen', del: 'Löschen', copy: 'Kopieren', copied: 'Kopiert', folder: 'Ordner', running: 'offen', stopped: 'geschlossen',
+  empty: 'Noch keine Instanz. Leg oben die erste an.', confirm: (n) => `„${n}“ mit allen Logins und Daten löschen?`, data: 'Daten',
+} : {
+  open: 'Open', close: 'Close', del: 'Delete', copy: 'Copy', copied: 'Copied', folder: 'Folder', running: 'open', stopped: 'closed',
+  empty: 'No instance yet. Create the first one above.', confirm: (n) => `Delete "${n}" with all its logins and data?`, data: 'Data',
+};
+if (de) { document.documentElement.lang = 'de'; for (const el of document.querySelectorAll('[data-t]')) if (T[el.dataset.t]) el.textContent = T[el.dataset.t]; document.querySelector('[data-tp]').placeholder = T.ph; }
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const err = (m) => { $('#err').textContent = m || ''; };
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+let busy = new Set(), last = '';
+async function refresh() {
+  try {
+    const { home, instances } = await api('/api/instances');
+    $('#home').innerHTML = `${T.data}: <code>${esc(home)}</code>`;
+    const html = instances.length ? instances.map((i) => `
+      <li style="--c:${esc(i.color)}" data-id="${esc(i.id)}">
+        <div class="row">
+          <span class="name">${esc(i.name)}</span><span class="id">${esc(i.id)}</span>
+          <span class="state ${i.running ? 'on' : ''}"><i></i>${i.running ? T.running : T.stopped}</span>
+          <span class="spacer"></span>
+          ${i.running ? `<button data-op="stop">${T.close}</button>` : `<button class="primary" data-op="start" ${busy.has(i.id) ? 'disabled' : ''}>${T.open}</button>`}
+          <button data-op="folder">${T.folder}</button>
+          <button class="danger" data-op="delete">${T.del}</button>
+        </div>
+        <div class="cmd"><code>claude mcp add browser-${esc(i.id)} -- npx -y browserpit mcp ${esc(i.id)}</code><button data-op="copy">${T.copy}</button></div>
+        <div class="meta">${esc(i.engine)} · port ${i.port}${i.browser ? ' · ' + esc(i.browser) : ''}</div>
+      </li>`).join('') : `<li class="empty" style="--c:transparent">${T.empty}</li>`;
+    if (html !== last) { $('#list').innerHTML = html; last = html; }
+  } catch (e) { err(e.message); }
+}
+$('#list').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('button[data-op]'); if (!b) return;
+  const li = b.closest('li'), id = li.dataset.id, op = b.dataset.op;
+  err('');
+  if (op === 'copy') { await navigator.clipboard.writeText(li.querySelector('code').textContent); b.textContent = T.copied; setTimeout(() => (b.textContent = T.copy), 1200); return; }
+  if (op === 'delete' && !confirm(T.confirm(li.querySelector('.name').textContent))) return;
+  b.disabled = true; busy.add(id);
+  try { await api(`/api/instances/${id}/${op}`, {}); } catch (e) { err(e.message); }
+  busy.delete(id); last = ''; refresh();
+});
+$('#new').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); err('');
+  const f = new FormData(ev.target);
+  try {
+    const i = await api('/api/instances', { name: f.get('name'), engine: f.get('engine') });
+    ev.target.reset(); await api(`/api/instances/${i.id}/start`, {});
+  } catch (e) { err(e.message); }
+  last = ''; refresh();
+});
+refresh(); setInterval(refresh, 2000);
+</script>
+</body>
+</html>
